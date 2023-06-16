@@ -1,0 +1,1 @@
+control_point_size = 5
