@@ -43,23 +43,27 @@ class Shape(ABC):
 
     @abstractmethod
     def get_bounding_box_points(self) -> List[Point]:
-        return
+        pass
 
 
 class Line(Shape):
-    def __init__(self, p_1: Point, p_2: Point):
-        self.p_1 = p_1
-        self.p_2 = p_2
+    def __init__(self, start: Point, end: Point, is_bezier=False):
+        self.p_1: Point = start
+        self.p_3: Point = end
         # Control point for quadratic bezier curve
-        self.p_3 = Point((p_1.x + p_2.x) // 2, (p_1.y + p_2.y) // 2)
-        self.control_points = [self.p_1, self.p_2, self.p_3]
+        self.p_2: Point = Point((self.p_1.x + self.p_3.x) // 2, (self.p_1.y + self.p_3.y) // 2)
 
     def get_control_points(self):
-        return self.control_points
+        return [self.p_1, self.p_2, self.p_3]
 
     def get_bounding_box_points(self) -> Tuple[Point, Point]:
         return get_min_max_points([self.p_1, self.p_2])
 
+    def has_centered_control_point(self):
+        return self.p_2.x == (self.p_1.x + self.p_3.x) // 2 and self.p_2.y == (self.p_1.y + self.p_3.y) // 2
+
+    def center_control_point(self):
+        self.p_2 = Point((self.p_1.x + self.p_3.x) // 2, (self.p_1.y + self.p_3.y) // 2)
 
 class ControlPoint(Shape):
     def __init__(self, p: Point, z_index=1):
@@ -89,19 +93,16 @@ class Polygon(Shape):
         if self.closed:
             self.lines.append(Line(points[-1], points[0]))
 
-        # Get control points (for the polygon)
-        self.control_points: List[Point] = []
-        for l in self.lines:
-            for c in l.get_control_points():
-                # Todo: does this filter all or on object base?
-                if c not in self.control_points:
-                    self.control_points.append(c)
-
     def get_lines(self) -> List[Line]:
         return self.lines
 
     def get_control_points(self):
-        return self.control_points
+        result = []
+        for l in self.lines:
+            for c in l.get_control_points():
+                if c not in result:
+                    result.append(c)
+        return result
 
     def get_bounding_box_points(self) -> Tuple[Point, Point]:
-        return get_min_max_points(self.control_points)
+        return get_min_max_points(self.get_control_points())
