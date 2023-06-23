@@ -2,6 +2,9 @@ from copy import copy
 from tkinter import Canvas
 from typing import List, Union, Tuple
 
+import numpy
+import numpy as np
+
 from config import control_point_size, bezier_segments
 from shapes import Line, Shape, Polygon, Point, ControlPoint
 
@@ -36,7 +39,7 @@ class Renderer:
         self.show_control_points = not self.show_control_points
 
     def draw_line(self, line: Line):
-        pixels = list(self.bresenham(line.p_1.x, line.p_1.y, line.p_3.x, line.p_3.y))
+        pixels = np.array(list(self.bresenham(line.p_1.x, line.p_1.y, line.p_3.x, line.p_3.y)))
         for p in pixels:
             self.canvas.create_rectangle(p.x,p.y,p.x,p.y)
         return pixels
@@ -48,16 +51,16 @@ class Renderer:
             points.append(self.de_casteljau([line.p_1, line.p_2, line.p_3], 1/bezier_segments*t))
 
         # Draw lines to connect these points
-        pixels = []
+        pixels = np.array([])
         for i in range(len(points)-1):
-            pixels += self.draw_line(Line(points[i], points[i+1]))
+            np.concatenate((pixels, self.draw_line(Line(points[i], points[i+1]))))
         return pixels
 
     def draw_polygon(self, polygon: Polygon):
         lines = polygon.get_lines()
-        pixels = []
+        pixels = np.array([])
         for l in lines:
-            pixels += self.draw_bezier(l)
+            np.concatenate((pixels, self.draw_bezier(l)))
 
         if polygon.closed:
             self.fill_polygon(pixels)
