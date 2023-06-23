@@ -1,6 +1,6 @@
 from copy import copy
 from tkinter import Canvas
-from typing import List, Union
+from typing import List, Union, Tuple
 
 from config import control_point_size, bezier_segments
 from shapes import Line, Shape, Polygon, Point, ControlPoint
@@ -12,7 +12,7 @@ class Renderer:
         self.show_control_points = True
 
     def render(self, shapes: List[Shape]):
-        self.canvas.delete("all")
+        self.canvas.delete("all") # only delete change areas
 
         # Order by z-index
         # https://www.perplexity.ai/search/8bbd5f6e-4a1d-48ee-ab76-4ff9ba2534c6?s=c
@@ -36,9 +36,10 @@ class Renderer:
         self.show_control_points = not self.show_control_points
 
     def draw_line(self, line: Line):
-        points = list(self.bresenham(line.p_1.x, line.p_1.y, line.p_3.x, line.p_3.y))
-        for p in points:
-            self.canvas.create_rectangle(p[0],p[1],p[0],p[1])
+        pixels = list(self.bresenham(line.p_1.x, line.p_1.y, line.p_3.x, line.p_3.y))
+        for p in pixels:
+            self.canvas.create_rectangle(p.x,p.y,p.x,p.y)
+        return pixels
 
     def draw_bezier(self, line: Line):
         """Draws a quadratic Bézier curve with de casteljau algorithm"""
@@ -47,13 +48,24 @@ class Renderer:
             points.append(self.de_casteljau([line.p_1, line.p_2, line.p_3], 1/bezier_segments*t))
 
         # Draw lines to connect these points
+        pixels = []
         for i in range(len(points)-1):
-            self.draw_line(Line(points[i], points[i+1]))
+            pixels += self.draw_line(Line(points[i], points[i+1]))
+        return pixels
 
     def draw_polygon(self, polygon: Polygon):
         lines = polygon.get_lines()
+        pixels = []
         for l in lines:
-            self.draw_bezier(l)
+            pixels += self.draw_bezier(l)
+
+        if polygon.closed:
+            self.fill_polygon(pixels)
+
+    def fill_polygon(self, line_pixels):
+        line_pixels = sorted(line_pixels, key=lambda point: (point.y, point.x))
+        for l in range(0, len(line_pixels)-1, 2):
+            self.draw_line(Line(line_pixels[l], line_pixels[l+1]))
 
     def draw_control_point(self, control_point: ControlPoint):
         bounding_box_start, bounding_box_end = control_point.get_bounding_box_points()
@@ -69,15 +81,6 @@ class Renderer:
         for point in shape.get_control_points():
             self.draw_control_point(ControlPoint(point))
 
-    def _calculate_linear(self, t, w):
-        """
-        Calculates x + y combined with the weights
-        https://incolumitas.com/2013/10/06/plotting-bezier-curves/
-        """
-        x = t
-        y = 1 - t
-        return w[0] * x + w[1] * y
-
     def de_casteljau(self, points, t):
         # https://www.perplexity.ai/search/f27460a2-8072-4d3d-9d99-ffbbb62673e6?s=u
         if len(points) == 1:
@@ -91,6 +94,7 @@ class Renderer:
             return self.de_casteljau(new_points, t)
 
     def bresenham(self, x0, y0, x1, y1):
+        # Todo: refactor to rest of code style
         # ChatGPT with slight adaptations: https://chat.openai.com/share/5decad65-9c9d-4329-9bb8-7ad107222f51
         dx = abs(x1 - x0)
         dy = abs(y1 - y0)
@@ -108,9 +112,9 @@ class Renderer:
         error = 0
         for x in range(round(x0), round(x1) + 1):
             if steep:
-                yield (y, x)
+                yield Point(y, x)
             else:
-                yield (x, y)
+                yield Point(x, y)
             error += dy
             if 2 * error >= dx:
                 y += ystep

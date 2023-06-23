@@ -7,15 +7,6 @@ from config import control_point_size
 from renderer import Renderer
 from shapes import Point, ControlPoint, Line, Polygon, Shape
 
-# class UiLine:
-#     def __init__(self, line: Line, control_point_moved: bool):
-#         self.line = line
-#         self.control_point_moved: control_point_moved
-#
-#     def center_control_point(self):
-#         if not self.control_point_moved:
-#             self.line.p_2.x = (self.line.p_1.x + self.line.p_3.x) // 2
-#             self.line.p_2.y = (self.line.p_1.y + self.line.p_3.y) // 2
 
 class Ui:
     grabbed_point: Point = None

@@ -57,12 +57,14 @@ class Line(Shape):
         return [self.p_1, self.p_2, self.p_3]
 
     def get_bounding_box_points(self) -> Tuple[Point, Point]:
-        return get_min_max_points([self.p_1, self.p_2])
+        return get_min_max_points([self.p_1, self.p_3])
 
     def has_centered_control_point(self):
+        # Todo: extract function
         return self.p_2.x == (self.p_1.x + self.p_3.x) // 2 and self.p_2.y == (self.p_1.y + self.p_3.y) // 2
 
     def center_control_point(self):
+        # Todo: extract function
         self.p_2 = Point((self.p_1.x + self.p_3.x) // 2, (self.p_1.y + self.p_3.y) // 2)
 
 class ControlPoint(Shape):
