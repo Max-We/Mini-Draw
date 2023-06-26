@@ -1,6 +1,7 @@
 import math
 
 import tkinter as tk
+from typing import List
 
 from ShapeManager import ShapeManager
 from config import control_point_size, canvas_width, canvas_height
@@ -19,19 +20,38 @@ class Ui:
         # https://www.perplexity.ai/search/0522ed03-1bae-4292-9d40-9bdeed7b91c4?s=c
         # Create the main window
         self.root = tk.Tk()
+        self.root
 
         # Create the canvas & renderer
         canvas = tk.Canvas(self.root, width=canvas_width, height=canvas_height, bg="white")
-        canvas.pack()
+        canvas.grid(row=0, columnspan=3)
         self.renderer = Renderer(canvas)
+
+        # Create controls
+        self.init_color_buttons()
+        self.init_fill_pattern_buttons()
 
         self.register_keybinds(canvas)
 
         # Initial rendering
-        self.renderer.render(self.shape_manager.get_shapes())
+        self.renderer.render(self.shape_manager.get_shapes(), self.color_selection.get(), self.pattern_selection.get())
 
         # Run
         self.root.mainloop()
+
+    def init_color_buttons(self):
+        self.color_selection = tk.StringVar(value="blue")
+        tk.Radiobutton(self.root, text="Red", variable=self.color_selection, value="red", command=self.render).grid(row=2, column=0)
+        tk.Radiobutton(self.root, text="Green", variable=self.color_selection, value="green", command=self.render).grid(row=2, column=1)
+        tk.Radiobutton(self.root, text="Blue", variable=self.color_selection, value="blue", command=self.render).grid(row=2, column=2)
+        tk.Label(self.root, text="Color").grid(row=1, column=0, columnspan=3)
+
+    def init_fill_pattern_buttons(self):
+        self.pattern_selection = tk.StringVar(value="horizontal")
+        tk.Radiobutton(self.root, text="Horizontal", variable=self.pattern_selection, value="vertical", command=self.render).grid(row=4, column=0)
+        tk.Radiobutton(self.root, text="Vertical", variable=self.pattern_selection, value="horizontal", command=self.render).grid(row=4, column=1)
+        tk.Radiobutton(self.root, text="Checkers", variable=self.pattern_selection, value="checkers", command=self.render).grid(row=4, column=2)
+        tk.Label(self.root, text="Pattern").grid(row=3, column=0, columnspan=3)
 
     def register_keybinds(self, canvas):
         # Moving points
@@ -50,7 +70,7 @@ class Ui:
 
     def show_control_points(self, event):
         self.renderer.toggle_control_points()
-        self.renderer.render(self.shape_manager.get_shapes())
+        self.render()
 
     def grab_point(self, event):
         """Selects the point under the user's cursor."""
@@ -62,7 +82,7 @@ class Ui:
 
         if self.grabbed_point:
             self.shape_manager.move_point(self.grabbed_point, Point(event.x, event.y))
-            self.renderer.render(self.shape_manager.get_shapes())
+            self.render()
 
     def drop_point(self, event):
         """Ends the process of moving the point around."""
@@ -77,7 +97,7 @@ class Ui:
         new_shape_points = []
         new_shape_points.append(Point(event.x, event.y))
         # Temporary show the shape which is being drawn by the user
-        self.renderer.render(self.shape_manager.get_shapes() + [ControlPoint(new_shape_points[0])])
+        self.render(self.shape_manager.get_shapes() + [ControlPoint(new_shape_points[0])])
 
     def has_minimum_distance_to_last_point(self, point: Point):
         """Don't allow user to draw points on top of each other (bad UX)"""
@@ -98,8 +118,7 @@ class Ui:
             if self.has_minimum_distance_to_last_point(new_point):
                 new_shape_points.append(new_point)
             # Temporary show the shape which is being drawn by the user
-            self.renderer.render(
-                self.shape_manager.get_shapes() + [Polygon(new_shape_points, closed=False, z_index=1000)])
+            self.render(self.shape_manager.get_shapes() + [Polygon(new_shape_points, closed=False, z_index=1000)])
 
     def stop_draw(self, event):
         """Combine the points to a shape. This results in a single point (1) or line / polygon (>1)."""
@@ -122,9 +141,12 @@ class Ui:
                 new_shape_points.append(new_point)
             self.shape_manager.add_shape(Polygon(new_shape_points, closed=False))
 
-        self.renderer.render(self.shape_manager.get_shapes())
+        self.render()
         new_shape_points = []
 
     def clear_canvas(self, event):
         self.shape_manager.clear()
-        self.renderer.render(self.shape_manager.get_shapes())
+        self.render()
+
+    def render(self, shapes: List[Shape]=None):
+        self.renderer.render(self.shape_manager.get_shapes() if not shapes else shapes, self.color_selection.get(), self.pattern_selection.get())

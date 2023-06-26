@@ -12,7 +12,7 @@ stripe_mask_v = stripe_mask_v[:canvas_width, :canvas_height]
 # Horizontal = rotated vertical mask
 stripe_mask_h = stripe_mask_v.T
 
-# To create a diagonal pattern, combine horizontal and vertical pattern
-# Intersection points and points where no lines meet should become the horizontal pattern
-stripe_mask_d = stripe_mask_v * stripe_mask_h
-stripe_mask_d = np.where(stripe_mask_d == 2, 2, 1)
+# To create a checkers pattern, combine horizontal and vertical pattern
+# Intersection points and points where no lines meet should become "checked"
+stripe_mask_c = stripe_mask_v * stripe_mask_h
+stripe_mask_c = np.where(stripe_mask_c == 2, 2, 1)

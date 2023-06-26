@@ -7,7 +7,7 @@ import numpy
 import numpy as np
 
 from config import control_point_size, bezier_segments, canvas_width, canvas_height, fill_color
-from patterns import stripe_mask_v, stripe_mask_h, stripe_mask_d
+from patterns import stripe_mask_v, stripe_mask_h, stripe_mask_c
 from shapes import Line, Shape, Polygon, Point, ControlPoint
 
 
@@ -20,7 +20,7 @@ class Renderer:
         self.show_control_points = True
         self.cache: List[Shape] = None
 
-    def render(self, shapes: List[Shape]):
+    def render(self, shapes: List[Shape], color: str, pattern: str):
         # Find changes since last render
         self.canvas.delete("all")
 
@@ -34,7 +34,7 @@ class Renderer:
             if isinstance(s, Line):
                 self.draw_bezier(s)
             elif isinstance(s, Polygon):
-                self.draw_polygon(s)
+                self.draw_polygon(s, color, pattern)
             elif isinstance(s, ControlPoint):
                 self.draw_control_point(s)
 
@@ -67,16 +67,16 @@ class Renderer:
             pixels |= self.draw_line(Line(points[i], points[i + 1]))
         return pixels
 
-    def draw_polygon(self, polygon: Polygon):
+    def draw_polygon(self, polygon: Polygon, color, pattern):
         lines = polygon.get_lines()
         pixels = np.zeros((canvas_width, canvas_height), dtype=bool)
         for l in lines:
             pixels |= self.draw_bezier(l)
 
         if polygon.closed:
-            self.fill_polygon(polygon, pixels)
+            self.fill_polygon(polygon, pixels, color, pattern)
 
-    def fill_polygon(self, polygon: Polygon, line_pixels):
+    def fill_polygon(self, polygon: Polygon, line_pixels, color: str, pattern: str):
         #  Get the bounding box + small padding to fill
         start, end = polygon.get_bounding_box_points()
         start.x -= 1
@@ -91,13 +91,18 @@ class Renderer:
         # Mask everything around the polygon
         mask = self.flood_fill((start.x, start.y), line_pixels, start, end, mask, edited)
         mask = np.invert(mask)
-        mask = mask * stripe_mask_d
-        # mask = self.fill_wiki(start.x, start.y, line_pixels, start, end, mask, edited)
+
+        if pattern == "horizontal":
+            mask = mask * stripe_mask_h
+        elif pattern == "vertical":
+            mask = mask * stripe_mask_v
+        elif pattern == "checkers":
+            mask = mask * stripe_mask_c
 
         # Fill everything inside the polygon
         for x, y in np.argwhere((mask == 1) | (mask == 2)):
             if start.x <= x <= end.x and start.y <= y <= end.y and not line_pixels[x, y]:
-                self.canvas.create_rectangle(x, y, x, y, outline=fill_color if mask[x,y] == 1 else "white")
+                self.canvas.create_rectangle(x, y, x, y, outline=color if mask[x,y] == 1 else "white")
 
     def flood_fill(self, point: Tuple[int, int], line_pixels, start: Point, end: Point, mask, edited):
         is_inside_bounds = start.x <= point[0] <= end.x and start.y <= point[1] <= end.y
