@@ -1,21 +1,28 @@
-from copy import copy
+import sys
+from copy import copy, deepcopy
 from tkinter import Canvas
 from typing import List, Union, Tuple
 
 import numpy
 import numpy as np
 
-from config import control_point_size, bezier_segments
+from config import control_point_size, bezier_segments, canvas_width, canvas_height, fill_color
+from patterns import stripe_mask_v, stripe_mask_h, stripe_mask_d
 from shapes import Line, Shape, Polygon, Point, ControlPoint
+
+
+sys.setrecursionlimit(500000)
 
 
 class Renderer:
     def __init__(self, canvas: Canvas):
         self.canvas = canvas
         self.show_control_points = True
+        self.cache: List[Shape] = None
 
     def render(self, shapes: List[Shape]):
-        self.canvas.delete("all")  # only delete change areas
+        # Find changes since last render
+        self.canvas.delete("all")
 
         # Order by z-index
         # https://www.perplexity.ai/search/8bbd5f6e-4a1d-48ee-ab76-4ff9ba2534c6?s=c
@@ -39,9 +46,12 @@ class Renderer:
         self.show_control_points = not self.show_control_points
 
     def draw_line(self, line: Line):
-        pixels = np.array(list(self.bresenham(line.p_1.x, line.p_1.y, line.p_3.x, line.p_3.y)), dtype=tuple)
-        for p in pixels:
+        pixels = np.zeros((canvas_width, canvas_height), dtype=bool)
+        pixels_to_set = np.array(list(self.bresenham(line.p_1.x, line.p_1.y, line.p_3.x, line.p_3.y)), dtype=tuple)
+        for p in pixels_to_set:
             self.canvas.create_rectangle(p[0], p[1], p[0], p[1])
+            pixels[round(p[0]), round(p[1])] = True
+
         return pixels
 
     def draw_bezier(self, line: Line):
@@ -51,97 +61,61 @@ class Renderer:
             points.append(self.de_casteljau([line.p_1, line.p_2, line.p_3], 1 / bezier_segments * t))
 
         # Draw lines to connect these points
-        pixels = None
+        pixels = np.zeros((canvas_width, canvas_height), dtype=bool)
         for i in range(len(points) - 1):
-            if pixels is None:
-                pixels = np.array(self.draw_line(Line(points[i], points[i + 1])), dtype=tuple)
-            else:
-                pixels = np.append(pixels, self.draw_line(Line(points[i], points[i + 1])), axis=0)
+            # https://www.perplexity.ai/search/cf60ad1e-3454-4b35-94da-c3975269a871?s=c
+            pixels |= self.draw_line(Line(points[i], points[i + 1]))
         return pixels
 
     def draw_polygon(self, polygon: Polygon):
         lines = polygon.get_lines()
-        pixels = None
+        pixels = np.zeros((canvas_width, canvas_height), dtype=bool)
         for l in lines:
-            if pixels is None:
-                pixels = np.array(self.draw_bezier(l), dtype=tuple)
-            else:
-                pixels = np.append(pixels, self.draw_bezier(l), axis=0)
+            pixels |= self.draw_bezier(l)
 
         if polygon.closed:
-            self.fill_polygon(pixels)
+            self.fill_polygon(polygon, pixels)
 
-    def fill_polygon(self, line_pixels):
-        # Sort pixels
-        # https://www.perplexity.ai/search/a67f76a9-a2a0-4eef-87e9-3be5e055c6df?s=c
-        line_pixels = line_pixels.astype(float)
-        line_pixels = np.rint(line_pixels).astype(int)
-        line_pixels = np.unique(line_pixels, axis=0)
-        indices = np.lexsort((line_pixels[:, 0], line_pixels[:, 1]))
-        line_pixels = line_pixels[indices]
+    def fill_polygon(self, polygon: Polygon, line_pixels):
+        #  Get the bounding box + small padding to fill
+        start, end = polygon.get_bounding_box_points()
+        start.x -= 1
+        start.y -= 1
+        end.x += 1
+        end.y += 1
+        mask = np.zeros((canvas_width, canvas_height), dtype=bool)
+        mask = np.invert(mask)
+        mask[start.x:end.x, start.y:end.y] = False
+        edited = np.zeros((canvas_width, canvas_height), dtype=bool)
 
-        # Filter edges
-        # Bresenham algorithm creates lines with thickness > 1 in some cases
-        # To fille the rectangel we need the edges
-        edges_mask = np.array([], dtype=bool)
-        last_edge = None
-        for edge_index in range(line_pixels.shape[0]):
-            if last_edge is not None:
-                p_x = line_pixels[last_edge][0]
-                c_x = line_pixels[edge_index][0] - 1
-                p_y = line_pixels[last_edge][1]
-                c_y = line_pixels[edge_index][1]
-                if c_x == p_x and c_y == p_y:
-                    edges_mask = np.append(edges_mask, False)
-                    last_edge = edge_index
-                    continue
-            edges_mask = np.append(edges_mask, True)
-            last_edge = edge_index
+        # Mask everything around the polygon
+        mask = self.flood_fill((start.x, start.y), line_pixels, start, end, mask, edited)
+        mask = np.invert(mask)
+        mask = mask * stripe_mask_d
+        # mask = self.fill_wiki(start.x, start.y, line_pixels, start, end, mask, edited)
 
-        line_pixels = line_pixels[edges_mask]
+        # Fill everything inside the polygon
+        for x, y in np.argwhere((mask == 1) | (mask == 2)):
+            if start.x <= x <= end.x and start.y <= y <= end.y and not line_pixels[x, y]:
+                self.canvas.create_rectangle(x, y, x, y, outline=fill_color if mask[x,y] == 1 else "white")
 
-        final_points = None
-        inside = False
-        last_p_i = None
-        for edge_index in range(line_pixels.shape[0]):
-            y1 = line_pixels[edge_index][1]
-            # above_continuation = line_pixels[line_pixels[:, 1] > y1]
-            # above_continuation = np.any(above_continuation[np.any(
-            #     above_continuation[:, 0] <= line_pixels[edge_index, 0] + 2) and np.any(
-            #     above_continuation[:, 0] >= line_pixels[edge_index, 0] - 2)])
-            # below_continuation = line_pixels[line_pixels[:, 1] < y1]
-            # below_continuation = np.any(below_continuation[np.any(
-            #     below_continuation[:, 0] <= line_pixels[edge_index, 0] + 2) and np.any(
-            #     below_continuation[:, 0] >= line_pixels[edge_index, 0] - 2)])
-            # # if (y1 == y2):
-            # if not (above_continuation and below_continuation):
-            #     inside = False
-            #     continue
+    def flood_fill(self, point: Tuple[int, int], line_pixels, start: Point, end: Point, mask, edited):
+        is_inside_bounds = start.x <= point[0] <= end.x and start.y <= point[1] <= end.y
+        hit_line = line_pixels[point[0], point[1]]
 
-            if not inside:
-                inside = True
-                last_p_i = edge_index
-            else:
-                y2 = line_pixels[last_p_i][1]
-                if (y1 == y2):
-                    if final_points is None:
-                        final_points = np.array([((line_pixels[last_p_i]),(line_pixels[edge_index]))])
-                    else:
-                        final_points = np.append(final_points, [((line_pixels[last_p_i]),(line_pixels[edge_index]))], axis=0)
-                    inside = False
-                else:
-                    last_p_i = edge_index
+        if edited[point[0], point[1]]:
+            return mask
+        edited[point[0], point[1]] = True
 
-        for l in range(final_points.shape[0]):
-            p1 = Point(final_points[l][0][0], final_points[l][0][1])
-            p2 = Point(final_points[l][1][0], final_points[l][1][1])
-            self.draw_line(Line(p1, p2))
+        # https://de.wikipedia.org/wiki/Floodfill
+        if not hit_line and is_inside_bounds:
+            mask[point[0], point[1]] = True
+            self.flood_fill((point[0], point[1] + 1), line_pixels, start, end, mask, edited)  # ↓
+            self.flood_fill((point[0], point[1] - 1), line_pixels, start, end, mask, edited)  # ↑
+            self.flood_fill((point[0] + 1, point[1]), line_pixels, start, end, mask, edited)  # →
+            self.flood_fill((point[0] - 1, point[1]), line_pixels, start, end, mask, edited)  # ←
 
-        # for l in range(0, (line_pixels.shape[0]-2), 2):
-        #     p1 = Point(line_pixels[l][0], line_pixels[l][1])
-        #     p2 = Point(line_pixels[l + 1][0], line_pixels[l + 1][1])
-        #     if p1.x == p2.x:
-        #         self.draw_line(Line(p1, p2))
+        return mask
 
     def draw_control_point(self, control_point: ControlPoint):
         bounding_box_start, bounding_box_end = control_point.get_bounding_box_points()

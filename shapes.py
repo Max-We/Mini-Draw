@@ -28,8 +28,6 @@ def get_min_max_points(points: List[Point]) -> Tuple[Point, Point]:
         if max_y is None or p.y > max_y:
             max_y = p.y
 
-    print(min_x, min_y, max_x, max_y)
-
     return Point(min_x, min_y), Point(max_x, max_y)
 
 
@@ -42,9 +40,8 @@ class Shape(ABC):
         pass
 
     @abstractmethod
-    def get_bounding_box_points(self) -> List[Point]:
+    def get_bounding_box_points(self) -> Tuple[Point, Point]:
         pass
-
 
 class Line(Shape):
     def __init__(self, start: Point, end: Point, is_bezier=False):

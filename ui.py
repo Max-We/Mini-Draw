@@ -3,7 +3,7 @@ import math
 import tkinter as tk
 
 from ShapeManager import ShapeManager
-from config import control_point_size
+from config import control_point_size, canvas_width, canvas_height
 from renderer import Renderer
 from shapes import Point, ControlPoint, Line, Polygon, Shape
 
@@ -21,7 +21,7 @@ class Ui:
         self.root = tk.Tk()
 
         # Create the canvas & renderer
-        canvas = tk.Canvas(self.root, width=400, height=400, bg="white")
+        canvas = tk.Canvas(self.root, width=canvas_width, height=canvas_height, bg="white")
         canvas.pack()
         self.renderer = Renderer(canvas)
 
