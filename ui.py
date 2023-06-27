@@ -49,7 +49,7 @@ class Ui:
         tk.Button(self.root, text="Color Picker", command=self.choose_color).grid(row=4, column=3, pady=(10,0))
 
     def choose_color(self):
-        selection = colorchooser.askcolor(title="Choose color")
+        selection = colorchooser.askcolor(title="Choose color", color=self.color_selection.get())
         if selection[1]:
             self.color_selection.set(selection[1])
             self.render()
