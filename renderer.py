@@ -49,8 +49,9 @@ class Renderer:
         pixels = np.zeros((canvas_width, canvas_height), dtype=bool)
         pixels_to_set = np.array(list(self.bresenham(line.p_1.x, line.p_1.y, line.p_3.x, line.p_3.y)), dtype=tuple)
         for p in pixels_to_set:
-            self.canvas.create_rectangle(p[0], p[1], p[0], p[1])
-            pixels[round(p[0]), round(p[1])] = True
+            if 0 < p[0] < canvas_width and 0 < p[1] < canvas_height:
+                self.canvas.create_rectangle(p[0], p[1], p[0], p[1])
+                pixels[round(p[0]), round(p[1])] = True
 
         return pixels
 
@@ -105,6 +106,10 @@ class Renderer:
                 self.canvas.create_rectangle(x, y, x, y, outline=color if mask[x,y] == 1 else "white")
 
     def flood_fill(self, point: Tuple[int, int], line_pixels, start: Point, end: Point, mask, edited):
+        # Don't render points outside the canvas
+        if not (line_pixels.shape[0] > point[0]) or not (line_pixels.shape[1] > point[1]):
+            return mask
+
         is_inside_bounds = start.x <= point[0] <= end.x and start.y <= point[1] <= end.y
         hit_line = line_pixels[point[0], point[1]]
 

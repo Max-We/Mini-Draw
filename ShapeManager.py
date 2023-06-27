@@ -1,7 +1,7 @@
 import math
 from typing import List
 
-from config import control_point_size
+from config import control_point_size, canvas_width, canvas_height
 from shapes import Shape, Point, Line, Polygon
 
 
@@ -29,6 +29,9 @@ class ShapeManager:
                     return c.id
 
     def move_point(self, point_id, new_point_pos: Point):
+        if not (0 < new_point_pos.x < canvas_width) or not (0 < new_point_pos.y < canvas_height):
+            return
+
         for s in self.shapes:
             old_point_pos = None
             lines_to_consider = []
