@@ -1,6 +1,8 @@
 import math
+import pickle
 
 import tkinter as tk
+from tkinter import filedialog
 from typing import List
 
 from ShapeManager import ShapeManager
@@ -20,38 +22,44 @@ class Ui:
         # https://www.perplexity.ai/search/0522ed03-1bae-4292-9d40-9bdeed7b91c4?s=c
         # Create the main window
         self.root = tk.Tk()
-        self.root
+        self.root.title("MiniDraw")
 
         # Create the canvas & renderer
         canvas = tk.Canvas(self.root, width=canvas_width, height=canvas_height, bg="white")
-        canvas.grid(row=0, columnspan=3)
+        canvas.grid(row=1, columnspan=3)
         self.renderer = Renderer(canvas)
 
         # Create controls
         self.init_color_buttons()
         self.init_fill_pattern_buttons()
+        self.init_fill_save_load_buttons()
 
         self.register_keybinds(canvas)
 
         # Initial rendering
-        self.renderer.render(self.shape_manager.get_shapes(), self.color_selection.get(), self.pattern_selection.get())
+        self.render()
 
         # Run
         self.root.mainloop()
 
     def init_color_buttons(self):
-        self.color_selection = tk.StringVar(value="blue")
-        tk.Radiobutton(self.root, text="Red", variable=self.color_selection, value="red", command=self.render).grid(row=2, column=0)
-        tk.Radiobutton(self.root, text="Green", variable=self.color_selection, value="green", command=self.render).grid(row=2, column=1)
-        tk.Radiobutton(self.root, text="Blue", variable=self.color_selection, value="blue", command=self.render).grid(row=2, column=2)
-        tk.Label(self.root, text="Color").grid(row=1, column=0, columnspan=3)
+        self.color_selection = tk.StringVar(value="green")
+        tk.Radiobutton(self.root, text="Red", variable=self.color_selection, value="red", command=self.render).grid(row=3, column=0)
+        tk.Radiobutton(self.root, text="Green", variable=self.color_selection, value="green", command=self.render).grid(row=3, column=1)
+        tk.Radiobutton(self.root, text="Blue", variable=self.color_selection, value="blue", command=self.render).grid(row=3, column=2)
+        tk.Label(self.root, text="Color").grid(row=2, column=0, columnspan=3)
 
     def init_fill_pattern_buttons(self):
-        self.pattern_selection = tk.StringVar(value="horizontal")
-        tk.Radiobutton(self.root, text="Horizontal", variable=self.pattern_selection, value="vertical", command=self.render).grid(row=4, column=0)
-        tk.Radiobutton(self.root, text="Vertical", variable=self.pattern_selection, value="horizontal", command=self.render).grid(row=4, column=1)
-        tk.Radiobutton(self.root, text="Checkers", variable=self.pattern_selection, value="checkers", command=self.render).grid(row=4, column=2)
-        tk.Label(self.root, text="Pattern").grid(row=3, column=0, columnspan=3)
+        self.pattern_selection = tk.StringVar(value="checkers")
+        tk.Radiobutton(self.root, text="Horizontal", variable=self.pattern_selection, value="vertical", command=self.render).grid(row=6, column=0)
+        tk.Radiobutton(self.root, text="Vertical", variable=self.pattern_selection, value="horizontal", command=self.render).grid(row=6, column=1)
+        tk.Radiobutton(self.root, text="Checkers", variable=self.pattern_selection, value="checkers", command=self.render).grid(row=6, column=2)
+        tk.Label(self.root, text="Pattern").grid(row=5, column=0, columnspan=3)
+
+    def init_fill_save_load_buttons(self):
+        # https://www.perplexity.ai/search/16ea9d17-306d-4176-bfe9-e6e2ec93d02a?s=c
+        tk.Button(self.root, text="Load", command=self.load).grid(row=0, column=0, sticky="W")
+        tk.Button(self.root, text="Save", command=self.save).grid(row=0, column=2, sticky="E")
 
     def register_keybinds(self, canvas):
         # Moving points
@@ -113,7 +121,8 @@ class Ui:
         global new_shape_points
 
         # Only if drawing is in progress
-        if len(new_shape_points) > 0:
+        # https://www.perplexity.ai/search/1c73ef15-23b2-4936-a4db-6294e63533e0?s=c
+        if "new_shape_points" in globals() and len(new_shape_points) > 0:
             new_point = Point(event.x, event.y)
             if self.has_minimum_distance_to_last_point(new_point):
                 new_shape_points.append(new_point)
@@ -143,6 +152,22 @@ class Ui:
 
         self.render()
         new_shape_points = []
+
+    def save(self):
+        # https://www.perplexity.ai/search/df10d36c-17b3-45e0-a9e9-3eb8efc8e1ce?s=c
+        f = filedialog.asksaveasfile(initialdir="~", title="Save file", defaultextension=".mdr", filetypes=(("MiniDraw file", "*.mdr"), ("All files", "*.*")), mode="wb")
+        if f is not None:
+            pickle.dump(self.shape_manager, f)
+            f.close()
+            self.render()
+
+    def load(self):
+        # https://www.perplexity.ai/search/df10d36c-17b3-45e0-a9e9-3eb8efc8e1ce?s=c
+        f = filedialog.askopenfile(initialdir="~", title="Select a directory", filetypes=(("MiniDraw files", "*.mdr"), ("All files", "*.*")), mode="rb")
+        if f is not None:
+            self.shape_manager = pickle.load(f)
+            f.close()
+            self.render()
 
     def clear_canvas(self, event):
         self.shape_manager.clear()
