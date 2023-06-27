@@ -26,7 +26,7 @@ class Ui:
 
         # Create the canvas & renderer
         canvas = tk.Canvas(self.root, width=canvas_width, height=canvas_height, bg="white")
-        canvas.grid(row=1, columnspan=3)
+        canvas.grid(row=1, columnspan=4)
         self.renderer = Renderer(canvas)
 
         # Create controls
@@ -47,19 +47,21 @@ class Ui:
         tk.Radiobutton(self.root, text="Red", variable=self.color_selection, value="red", command=self.render).grid(row=3, column=0)
         tk.Radiobutton(self.root, text="Green", variable=self.color_selection, value="green", command=self.render).grid(row=3, column=1)
         tk.Radiobutton(self.root, text="Blue", variable=self.color_selection, value="blue", command=self.render).grid(row=3, column=2)
-        tk.Label(self.root, text="Color").grid(row=2, column=0, columnspan=3)
+        tk.Radiobutton(self.root, text="Magenta", variable=self.color_selection, value="magenta", command=self.render).grid(row=3, column=3)
+        tk.Label(self.root, text="Color").grid(row=2, column=0, columnspan=4)
 
     def init_fill_pattern_buttons(self):
-        self.pattern_selection = tk.StringVar(value="checkers")
-        tk.Radiobutton(self.root, text="Horizontal", variable=self.pattern_selection, value="vertical", command=self.render).grid(row=6, column=0)
-        tk.Radiobutton(self.root, text="Vertical", variable=self.pattern_selection, value="horizontal", command=self.render).grid(row=6, column=1)
-        tk.Radiobutton(self.root, text="Checkers", variable=self.pattern_selection, value="checkers", command=self.render).grid(row=6, column=2)
-        tk.Label(self.root, text="Pattern").grid(row=5, column=0, columnspan=3)
+        self.pattern_selection = tk.StringVar(value="none")
+        tk.Radiobutton(self.root, text="None", variable=self.pattern_selection, value="none", command=self.render).grid(row=6, column=0)
+        tk.Radiobutton(self.root, text="Horizontal", variable=self.pattern_selection, value="vertical", command=self.render).grid(row=6, column=1)
+        tk.Radiobutton(self.root, text="Vertical", variable=self.pattern_selection, value="horizontal", command=self.render).grid(row=6, column=2)
+        tk.Radiobutton(self.root, text="Checkers", variable=self.pattern_selection, value="checkers", command=self.render).grid(row=6, column=3)
+        tk.Label(self.root, text="Pattern").grid(row=5, column=0, columnspan=4)
 
     def init_fill_save_load_buttons(self):
         # https://www.perplexity.ai/search/16ea9d17-306d-4176-bfe9-e6e2ec93d02a?s=c
         tk.Button(self.root, text="Load", command=self.load).grid(row=0, column=0, sticky="W")
-        tk.Button(self.root, text="Save", command=self.save).grid(row=0, column=2, sticky="E")
+        tk.Button(self.root, text="Save", command=self.save).grid(row=0, column=3, sticky="E")
 
     def register_keybinds(self, canvas):
         # Moving points

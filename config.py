@@ -3,8 +3,8 @@
 # needs to be >= 1
 bezier_segments = 10
 
-canvas_width = 400
-canvas_height = 400
+canvas_width = 500
+canvas_height = 500
 
 # Width of the stripes in the fill patterns
 stripe_width = 4
