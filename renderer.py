@@ -6,11 +6,11 @@ from typing import List, Union, Tuple
 import numpy
 import numpy as np
 
-from config import control_point_size, bezier_segments, canvas_width, canvas_height, fill_color
+from config import control_point_size, bezier_segments, canvas_width, canvas_height
 from patterns import stripe_mask_v, stripe_mask_h, stripe_mask_c
 from shapes import Line, Shape, Polygon, Point, ControlPoint
 
-
+# This is necessary for floodfill to work
 sys.setrecursionlimit(500000)
 
 
@@ -76,6 +76,11 @@ class Renderer:
 
         if polygon.closed:
             self.fill_polygon(polygon, pixels, color, pattern)
+
+        # Bug: Tkinter pixel drawn via create_rect != a real pixel but larger
+        # To prevent lines from disappearing we have to ensure that they are drawn last, otherwise fill will take over
+        for l in lines:
+            self.draw_bezier(l)
 
     def fill_polygon(self, polygon: Polygon, line_pixels, color: str, pattern: str):
         #  Get the bounding box + small padding to fill
