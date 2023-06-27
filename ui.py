@@ -2,7 +2,7 @@ import math
 import pickle
 
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, colorchooser
 from typing import List
 
 from ShapeManager import ShapeManager
@@ -43,20 +43,24 @@ class Ui:
         self.root.mainloop()
 
     def init_color_buttons(self):
-        self.color_selection = tk.StringVar(value="green")
-        tk.Radiobutton(self.root, text="Red", variable=self.color_selection, value="red", command=self.render).grid(row=3, column=0)
-        tk.Radiobutton(self.root, text="Green", variable=self.color_selection, value="green", command=self.render).grid(row=3, column=1)
-        tk.Radiobutton(self.root, text="Blue", variable=self.color_selection, value="blue", command=self.render).grid(row=3, column=2)
-        tk.Radiobutton(self.root, text="Magenta", variable=self.color_selection, value="magenta", command=self.render).grid(row=3, column=3)
-        tk.Label(self.root, text="Color").grid(row=2, column=0, columnspan=4)
+        self.color_selection = tk.StringVar(value="#34A1BC")
+        tk.Label(self.root, text=f"Color").grid(row=4, column=0, columnspan=2, pady=(10,0), sticky="W", padx=(25,0))
+        tk.Label(self.root, text=f"{self.color_selection.get()}").grid(row=4, column=2, sticky="W", padx=(30,0), pady=(10,0))
+        tk.Button(self.root, text="Color Picker", command=self.choose_color).grid(row=4, column=3, pady=(10,0))
+
+    def choose_color(self):
+        selection = colorchooser.askcolor(title="Choose color")
+        if selection[1]:
+            self.color_selection.set(selection[1])
+            self.render()
 
     def init_fill_pattern_buttons(self):
         self.pattern_selection = tk.StringVar(value="none")
-        tk.Radiobutton(self.root, text="None", variable=self.pattern_selection, value="none", command=self.render).grid(row=6, column=0)
-        tk.Radiobutton(self.root, text="Horizontal", variable=self.pattern_selection, value="vertical", command=self.render).grid(row=6, column=1)
-        tk.Radiobutton(self.root, text="Vertical", variable=self.pattern_selection, value="horizontal", command=self.render).grid(row=6, column=2)
-        tk.Radiobutton(self.root, text="Checkers", variable=self.pattern_selection, value="checkers", command=self.render).grid(row=6, column=3)
-        tk.Label(self.root, text="Pattern").grid(row=5, column=0, columnspan=4)
+        tk.Radiobutton(self.root, text="None", variable=self.pattern_selection, value="none", command=self.render).grid(row=5, column=2, sticky="W", pady=(20,0))
+        tk.Radiobutton(self.root, text="Horizontal", variable=self.pattern_selection, value="vertical", command=self.render).grid(row=5, column=3, sticky="w", pady=(20,0))
+        tk.Radiobutton(self.root, text="Vertical", variable=self.pattern_selection, value="horizontal", command=self.render).grid(row=6, column=2, sticky="W")
+        tk.Radiobutton(self.root, text="Checkers", variable=self.pattern_selection, value="checkers", command=self.render).grid(row=6, column=3, sticky="w")
+        tk.Label(self.root, text="Pattern").grid(row=5, column=0, columnspan=2, rowspan=2, pady=(20,0), sticky="W", padx=(25,0))
 
     def init_fill_save_load_buttons(self):
         # https://www.perplexity.ai/search/16ea9d17-306d-4176-bfe9-e6e2ec93d02a?s=c
