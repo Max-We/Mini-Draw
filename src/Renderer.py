@@ -13,6 +13,10 @@ sys.setrecursionlimit(100000)
 
 
 class Renderer:
+    """
+    Renders a collection of shapes on the canvas
+    """
+
     def __init__(self, canvas: Canvas):
         self.canvas = canvas
         self.show_control_points = True
