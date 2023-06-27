@@ -145,7 +145,7 @@ class Renderer:
             for i in range(len(points) - 1):
                 x = (1 - t) * points[i].x + t * points[i + 1].x
                 y = (1 - t) * points[i].y + t * points[i + 1].y
-                new_points.append(Point(x, y))
+                new_points.append(Point(round(x), round(y)))
             return self.de_casteljau(new_points, t)
 
     def bresenham(self, x0, y0, x1, y1):
