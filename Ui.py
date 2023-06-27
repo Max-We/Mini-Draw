@@ -7,8 +7,8 @@ from typing import List
 
 from ShapeManager import ShapeManager
 from config import control_point_size, canvas_width, canvas_height
-from renderer import Renderer
-from shapes import Point, ControlPoint, Line, Polygon, Shape
+from Renderer import Renderer
+from Shapes import Point, ControlPoint, Line, Polygon, Shape
 
 
 class Ui:

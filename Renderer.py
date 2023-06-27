@@ -7,8 +7,8 @@ import numpy
 import numpy as np
 
 from config import control_point_size, bezier_segments, canvas_width, canvas_height
-from patterns import stripe_mask_v, stripe_mask_h, stripe_mask_c
-from shapes import Line, Shape, Polygon, Point, ControlPoint
+from Patterns import stripe_mask_v, stripe_mask_h, stripe_mask_c
+from Shapes import Line, Shape, Polygon, Point, ControlPoint
 
 # This is necessary for floodfill to work
 sys.setrecursionlimit(500000)

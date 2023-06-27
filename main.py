@@ -1,6 +1,6 @@
 from ShapeManager import ShapeManager
-from shapes import Polygon, Point, Line
-from ui import Ui
+from Shapes import Polygon, Point, Line
+from Ui import Ui
 
 # Load shapemanager presets
 shape_manager = ShapeManager()

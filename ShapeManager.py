@@ -2,7 +2,7 @@ import math
 from typing import List
 
 from config import control_point_size, canvas_width, canvas_height
-from shapes import Shape, Point, Line, Polygon
+from Shapes import Shape, Point, Line, Polygon
 
 
 class ShapeManager:
