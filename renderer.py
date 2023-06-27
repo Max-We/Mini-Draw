@@ -23,6 +23,8 @@ class Renderer:
     def render(self, shapes: List[Shape], color: str, pattern: str):
         # Find changes since last render
         self.canvas.delete("all")
+        # self.canvas.create_rectangle(400,400,400,400)
+        # self.canvas.create_rectangle(401,400,401,400, outline="red")
 
         # Order by z-index
         # https://www.perplexity.ai/search/8bbd5f6e-4a1d-48ee-ab76-4ff9ba2534c6?s=c
@@ -50,7 +52,7 @@ class Renderer:
         pixels_to_set = np.array(list(self.bresenham(line.p_1.x, line.p_1.y, line.p_3.x, line.p_3.y)), dtype=tuple)
         for p in pixels_to_set:
             if 0 < p[0] < canvas_width and 0 < p[1] < canvas_height:
-                self.canvas.create_rectangle(p[0], p[1], p[0], p[1])
+                self.canvas.create_rectangle(round(p[0]),round(p[1]), round(p[0]), round(p[1]))
                 pixels[round(p[0]), round(p[1])] = True
 
         return pixels
@@ -104,6 +106,8 @@ class Renderer:
             mask = mask * stripe_mask_v
         elif pattern == "checkers":
             mask = mask * stripe_mask_c
+        else:
+            mask = mask.astype(int)
 
         # Fill everything inside the polygon
         for x, y in np.argwhere((mask == 1) | (mask == 2)):
