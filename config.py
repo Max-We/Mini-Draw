@@ -3,6 +3,7 @@
 # needs to be >= 1
 bezier_segments = 10
 
+# Size of the canvas in px
 canvas_width = 500
 canvas_height = 500
 
