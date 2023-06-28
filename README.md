@@ -2,7 +2,7 @@
 
 Mini Draw is a small python project that lets you create drawings with various shapes and bézier curves.
 
-![](showcase.webm)
+![showcase video](showcase.gif)
 
 ## Controls
 
